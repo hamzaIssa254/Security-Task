@@ -63,11 +63,11 @@ Route::post('tasks/{id}/comments',[TaskController::class,'addComment'])->middlew
 Route::get('reports/daily-tasks',[TaskController::class,'generateDailyReport'])->middleware('auth:api');
 Route::post('/tasks/{task}/restore', [TaskController::class, 'restore']);
 
-Route::middleware(['auth:api','admin'])->group(function () {
-    Route::get('/users', [UserController::class, 'index']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::put('/users/{user}', [UserController::class, 'update']);
-    Route::delete('/users/{user}', [UserController::class, 'destroy']);
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::get('roles',[RoleController::class,'index']);
     Route::post('roles',[RoleController::class,'store']);
     Route::put('roles/{id}',[RoleController::class,'update']);

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use App\Models\User;
+use App\Services\ApiResponseService;
 use Illuminate\Http\Request;
 use App\Services\UserService;
 
@@ -27,25 +30,20 @@ class UserController extends Controller
     {
 
         $users = $this->userService->getAllUsers();
-        return response()->json($users);
+        return ApiResponseService::paginated($users,'retrive success');
     }
     /**
      * Summary of store
      * @param \Illuminate\Http\Request $request
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'roles' => 'required|array'
-        ]);
+        $data = $request->validated();
 
-        $user = $this->userService->createUser($data, $request->roles);
+        $user = $this->userService->createUser($data, $data['roles']);
 
-        return response()->json(['message' => 'User created successfully', 'user' => $user]);
+        return response()->json(['message' => 'User created successfully', 'user' => $user],201);
     }
     /**
      * Summary of update
@@ -53,14 +51,9 @@ class UserController extends Controller
      * @param \App\Models\User $user
      * @return mixed|\Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
-            'roles' => 'required|array'
-        ]);
+        $data = $request->validated();
 
         $updatedUser = $this->userService->updateUser($user, $data, $request->roles);
 

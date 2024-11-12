@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -45,14 +46,12 @@ class UserService
         try {
             DB::beginTransaction();
 
-            $user = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => bcrypt($data['password']),
-            ]);
+            $validRoles = Role::whereIn('id', $roles)->pluck('id')->toArray();
 
-            // Assign roles
-            $user->roles()->sync($roles);
+            $user = User::create($data);
+
+            // ربط الأدوار بالمستخدم
+            $user->roles()->sync($validRoles);
 
             DB::commit();
 
@@ -60,6 +59,7 @@ class UserService
             Cache::forget('users_*');
 
             return $user;
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating user: ' . $e->getMessage());
@@ -74,15 +74,12 @@ class UserService
     {
         try {
             DB::beginTransaction();
+            $validRoles = Role::whereIn('id', $roles)->pluck('id')->toArray();
 
-            $user->update([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => isset($data['password']) ? bcrypt($data['password']) : $user->password,
-            ]);
+            $user->update(array_filter($data));
 
             // Re-assign roles
-            $user->roles()->sync($roles);
+            $user->roles()->sync($validRoles);
 
             DB::commit();
 
@@ -130,9 +127,7 @@ class UserService
      */
     public function retrieveUsers(int $id)
     {
-        if (Auth::user()->role !== 'Admin') {
-            throw new AuthorizationException("Access denied. Only admin can delete users.");
-        }
+
         try{
             $deletedUser = User::onlyTrashed()->find($id);
             $deletedUser->restore();
@@ -152,7 +147,7 @@ class UserService
             ], 404);
 
         }catch (Exception $e) {
-            
+
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred: ' . $e->getMessage(),

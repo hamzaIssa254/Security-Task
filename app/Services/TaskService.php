@@ -34,15 +34,7 @@ class TaskService
         DB::beginTransaction();
 
         // إنشاء المهمة
-        $task = Task::create([
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'type' => $data['type'],
-            'status' => $data['status'],
-            'priority' => $data['priority'],
-            'due_date' => $data['due_date'],
-            'assigned_to' => $data['assigned_to'],
-        ]);
+        $task = Task::create($data);
 
 
         if (isset($data['dependencies'])) {
@@ -346,7 +338,7 @@ class TaskService
 
         $task->restore();
 
-    
+
 
     }catch (Exception $e) {
         Log::error($e->getMessage());
